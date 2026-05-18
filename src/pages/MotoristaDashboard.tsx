@@ -105,7 +105,7 @@ const MotoristaDashboard = () => {
         setLoadedTrip(null);
         await fetchTrips();
       } else {
-        const routeParts = data?.rota?.split(' -> ') ?? data?.rota?.split(' → ') ?? [];
+        const routeParts = data?.rota ? data.rota.split(/\s*(?:->|→)\s*/) : [];
         const trip = await createTrip({
           ...checklist,
           caminhao: data?.veiculo || 'N/A',
@@ -205,7 +205,7 @@ const MotoristaDashboard = () => {
                 <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 space-y-2">
                   <p className="text-sm font-medium text-primary">Viagem carregada: {loadedTrip.trip_code}</p>
                   <p className="text-sm text-muted-foreground">
-                    {loadedTrip.caminhao} - {loadedTrip.origem} -> {loadedTrip.destino} - {loadedTrip.tipo_carga}
+                    {loadedTrip.caminhao} {' - '} {loadedTrip.origem} {' -> '} {loadedTrip.destino} {' - '} {loadedTrip.tipo_carga}
                   </p>
                   <Button variant="ghost" size="sm" onClick={() => setLoadedTrip(null)} className="text-xs">
                     Trocar viagem

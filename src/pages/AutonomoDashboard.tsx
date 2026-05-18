@@ -101,7 +101,7 @@ const AutonomoDashboard = () => {
 
   const handleStartTrip = useCallback(
     async (checklist: Record<string, boolean>) => {
-      const routeParts = data?.rota?.split(' -> ') ?? data?.rota?.split(' → ') ?? [];
+      const routeParts = data?.rota ? data.rota.split(/\s*(?:->|→)\s*/) : [];
       const trip = await createTrip({
         ...checklist,
         caminhao: data?.veiculo || 'N/A',
