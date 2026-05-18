@@ -29,18 +29,15 @@ const toText = (value: unknown): string | null => {
   return typeof value === 'string' && value.trim().length > 0 ? value : null;
 };
 
-const normalizeDeviceCandidates = (deviceId?: string) => {
+const normalizeDeviceCandidates = (deviceId?: string): string[] => {
   if (!deviceId?.trim()) return [];
 
   const trimmed = deviceId.trim();
   const lower = trimmed.toLowerCase();
   const digitsOnly = lower.replace(/^beacon/i, '').replace(/\D/g, '');
 
-  return Array.from(
-    new Set(
-      [trimmed, lower, digitsOnly, digitsOnly ? `beacon${digitsOnly}` : ''].filter(Boolean)
-    )
-  );
+  const candidates = [trimmed, lower, digitsOnly, digitsOnly ? `beacon${digitsOnly}` : ''];
+  return Array.from(new Set(candidates.filter((candidate): candidate is string => Boolean(candidate))));
 };
 
 const normalizeSensorData = (row: RawSensorRow): SensorData | null => {
@@ -50,6 +47,9 @@ const normalizeSensorData = (row: RawSensorRow): SensorData | null => {
   if (temperatura === null || umidade === null) {
     return null;
   }
+
+  const createdAt = toText(row.created_at);
+  const updatedAt = toText(row.updated_at);
 
   return {
     id: toText(row.id) ?? 'latest-reading',
@@ -65,8 +65,8 @@ const normalizeSensorData = (row: RawSensorRow): SensorData | null => {
     rota: toText(row.rota),
     veiculo: toText(row.veiculo),
     carga: toText(row.carga),
-    created_at: toText(row.created_at) ?? new Date().toISOString(),
-    updated_at: toText(row.updated_at),
+    created_at: createdAt ?? updatedAt ?? new Date().toISOString(),
+    updated_at: updatedAt,
     device_id: toText(row.device_id) ?? toText(row.device_code),
     device_code: toText(row.device_code) ?? toText(row.device_id),
     status: toText(row.status),
@@ -159,7 +159,7 @@ export const useSensorData = (deviceId?: string) => {
     let query = externalSupabase
       .from('viniferasense_data')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('updated_at', { ascending: false })
       .limit(1);
 
     if (filter) {
