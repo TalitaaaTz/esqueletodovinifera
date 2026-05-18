@@ -1,0 +1,205 @@
+@import 'leaflet/dist/leaflet.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ViniferaSense Design System */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  :root {
+    /* Light theme — Branco + Verde escuro (Figma) */
+    --background: 0 0% 100%;
+    --foreground: 280 20% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 280 20% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 280 20% 15%;
+
+    --primary: 280 45% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 275 30% 95%;
+    --secondary-foreground: 280 40% 30%;
+
+    --muted: 275 15% 94%;
+    --muted-foreground: 280 10% 45%;
+
+    --accent: 280 45% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 275 15% 88%;
+    --input: 275 25% 94%;
+    --ring: 280 45% 55%;
+
+    --radius: 0.75rem;
+
+    /* Warning token */
+    --warning: 45 100% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Custom ViniferaSense tokens */
+    --vs-healthy: 142 70% 40%;
+    --vs-warning: 45 100% 50%;
+    --vs-critical: 0 84% 55%;
+    --vs-info: 200 80% 50%;
+    
+    --vs-grape-purple: 280 50% 35%;
+    --vs-grape-light: 280 30% 92%;
+    
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 280 20% 15%;
+    --sidebar-primary: 280 45% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 275 30% 95%;
+    --sidebar-accent-foreground: 280 20% 15%;
+    --sidebar-border: 275 15% 88%;
+    --sidebar-ring: 280 45% 55%;
+
+    /* Auth card light purple */
+    --vs-auth-card: 275 40% 95%;
+  }
+
+  .dark {
+    --background: 0 0% 100%;
+    --foreground: 280 20% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 280 20% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 280 20% 15%;
+
+    --primary: 280 45% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 275 30% 95%;
+    --secondary-foreground: 280 40% 30%;
+
+    --muted: 275 15% 94%;
+    --muted-foreground: 280 10% 45%;
+
+    --accent: 280 45% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 275 15% 88%;
+    --input: 275 25% 94%;
+    --ring: 280 45% 55%;
+
+    --warning: 45 100% 55%;
+    --warning-foreground: 0 0% 0%;
+
+    --vs-healthy: 142 70% 40%;
+    --vs-warning: 45 100% 50%;
+    --vs-critical: 0 70% 55%;
+    --vs-info: 200 80% 50%;
+    
+    --vs-grape-purple: 280 50% 35%;
+    --vs-grape-light: 275 40% 95%;
+
+    --vs-auth-card: 275 40% 95%;
+    
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 280 20% 15%;
+    --sidebar-primary: 280 45% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 275 30% 95%;
+    --sidebar-accent-foreground: 280 20% 15%;
+    --sidebar-border: 275 15% 88%;
+    --sidebar-ring: 280 45% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .gradient-vs-primary {
+    background: hsl(var(--primary));
+  }
+  
+  .gradient-vs-dark {
+    background: hsl(0 0% 100%);
+  }
+  
+  .gradient-vs-card-dark {
+    background: hsl(0 0% 100%);
+  }
+  
+  .gradient-vs-healthy {
+    background: hsl(var(--vs-healthy));
+  }
+  
+  .gradient-vs-warning {
+    background: hsl(var(--vs-warning));
+  }
+  
+  .gradient-vs-critical {
+    background: hsl(var(--vs-critical));
+  }
+  
+  .glass-effect {
+    @apply bg-white border border-border;
+  }
+  
+  .glass-effect-light {
+    @apply bg-white border border-border;
+  }
+  
+  .text-gradient-purple {
+    color: hsl(var(--vs-grape-purple));
+  }
+  
+  .text-gradient-green {
+    color: hsl(var(--primary));
+  }
+  
+  .shadow-vs-glow {
+    box-shadow: 0 4px 20px -5px hsl(280 45% 55% / 0.2);
+  }
+  
+  .shadow-vs-glow-green {
+    box-shadow: 0 4px 20px -5px hsl(142 70% 40% / 0.25);
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes glow {
+    from {
+      box-shadow: 0 2px 10px -3px hsl(280 45% 55% / 0.2);
+    }
+    to {
+      box-shadow: 0 4px 20px -5px hsl(280 45% 55% / 0.35);
+    }
+  }
+  
+  .font-mono-data {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
