@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { UserType } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,21 +22,28 @@ const authSchema = z.object({
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 });
 
+const passwordResetSchema = z.object({
+  email: z.string().email('Email inválido'),
+});
+
 interface AuthFormProps {
   onSuccess?: () => void;
 }
 
 export const AuthForm = ({ onSuccess }: AuthFormProps) => {
-  const { signIn, signUp, createProfile } = useAuthContext();
+  const { signIn, signUp, createProfile, requestPasswordReset } = useAuthContext();
   const [step, setStep] = useState<'role' | 'credentials' | 'quickAccess'>('role');
   const [selectedRole, setSelectedRole] = useState<UserType | null>(null);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nome, setNome] = useState('');
   const [beaconCode, setBeaconCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [autonomoMode, setAutonomoMode] = useState<'quick' | 'email' | null>(null);
 
   const handleRoleSelect = (role: UserType) => {
@@ -136,6 +150,36 @@ export const AuthForm = ({ onSuccess }: AuthFormProps) => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenResetDialog = () => {
+    setResetEmail(email);
+    setResetDialogOpen(true);
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const cleanEmail = resetEmail.trim();
+    const validation = passwordResetSchema.safeParse({ email: cleanEmail });
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const { error } = await requestPasswordReset(cleanEmail);
+      if (error) {
+        toast.error('Erro ao solicitar recuperação: ' + error.message);
+        return;
+      }
+
+      toast.success('Se este e-mail estiver cadastrado, enviaremos um link de recuperação.');
+      setResetDialogOpen(false);
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -305,31 +349,32 @@ export const AuthForm = ({ onSuccess }: AuthFormProps) => {
 
   // Step 2: Email/Password Credentials
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <button
-        type="button"
-        onClick={() => {
-          if (selectedRole === 'autonomo') {
-            setAutonomoMode(null);
-            setStep('quickAccess');
-          } else {
-            setStep('role');
-          }
-        }}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Voltar
-      </button>
+    <>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <button
+          type="button"
+          onClick={() => {
+            if (selectedRole === 'autonomo') {
+              setAutonomoMode(null);
+              setStep('quickAccess');
+            } else {
+              setStep('role');
+            }
+          }}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </button>
 
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
-        <span className="text-xs font-medium text-primary">
-          {selectedRole === 'gestor' ? '📊 Gestor' : selectedRole === 'motorista' ? '🚛 Motorista' : '👤 Autônomo'}
-        </span>
-      </div>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
+          <span className="text-xs font-medium text-primary">
+            {selectedRole === 'gestor' ? '📊 Gestor' : selectedRole === 'motorista' ? '🚛 Motorista' : '👤 Autônomo'}
+          </span>
+        </div>
 
-      {/* Name field (signup only) */}
-      {!isLogin && (
+        {/* Name field (signup only) */}
+        {!isLogin && (
         <div className="space-y-2">
           <Label htmlFor="nome" className="text-foreground">Nome completo</Label>
           <div className="relative">
@@ -345,10 +390,10 @@ export const AuthForm = ({ onSuccess }: AuthFormProps) => {
             />
           </div>
         </div>
-      )}
+        )}
 
-      {/* Beacon code (signup + autonomo only) */}
-      {!isLogin && selectedRole === 'autonomo' && (
+        {/* Beacon code (signup + autonomo only) */}
+        {!isLogin && selectedRole === 'autonomo' && (
         <div className="space-y-2">
           <Label htmlFor="beacon" className="text-foreground">Código do Beacon</Label>
           <div className="relative">
@@ -365,73 +410,128 @@ export const AuthForm = ({ onSuccess }: AuthFormProps) => {
           </div>
           <p className="text-xs text-muted-foreground">Código do sensor vinculado à sua carga</p>
         </div>
-      )}
+        )}
 
-      <div className="space-y-2">
-        <Label htmlFor="email" className="text-foreground">Email</Label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            id="email"
-            type="email"
-            placeholder="seu@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="pl-10 h-12 bg-background border-input"
-            required
-          />
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-foreground">Email</Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10 h-12 bg-background border-input"
+              required
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password" className="text-foreground">Senha</Label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            id="password"
-            type={showPassword ? 'text' : 'password'}
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="pl-10 pr-10 h-12 bg-background border-input"
-            required
-          />
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-foreground">Senha</Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pl-10 pr-10 h-12 bg-background border-input"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
+
+        {isLogin && (
+          <div className="text-right -mt-1">
+            <button
+              type="button"
+              onClick={handleOpenResetDialog}
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              Esqueci minha senha
+            </button>
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          className="w-full h-12 text-base font-semibold gradient-vs-primary hover:opacity-90 transition-opacity"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Processando...
+            </>
+          ) : isLogin ? 'Entrar' : 'Criar Conta'}
+        </Button>
+
+        <div className="text-center">
           <button
             type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-sm text-muted-foreground hover:text-primary transition-colors"
           >
-            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            {isLogin ? (
+              <>Não tem conta? <span className="text-primary font-medium">Cadastre-se</span></>
+            ) : (
+              <>Já tem conta? <span className="text-primary font-medium">Faça login</span></>
+            )}
           </button>
         </div>
-      </div>
+      </form>
 
-      <Button
-        type="submit"
-        className="w-full h-12 text-base font-semibold gradient-vs-primary hover:opacity-90 transition-opacity"
-        disabled={loading}
-      >
-        {loading ? (
-          <>
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            Processando...
-          </>
-        ) : isLogin ? 'Entrar' : 'Criar Conta'}
-      </Button>
+      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Recuperar senha</DialogTitle>
+            <DialogDescription>
+              Informe o e-mail cadastrado para receber um link de recuperação.
+            </DialogDescription>
+          </DialogHeader>
 
-      <div className="text-center">
-        <button
-          type="button"
-          onClick={() => setIsLogin(!isLogin)}
-          className="text-sm text-muted-foreground hover:text-primary transition-colors"
-        >
-          {isLogin ? (
-            <>Não tem conta? <span className="text-primary font-medium">Cadastre-se</span></>
-          ) : (
-            <>Já tem conta? <span className="text-primary font-medium">Faça login</span></>
-          )}
-        </button>
-      </div>
-    </form>
+          <form onSubmit={handlePasswordReset} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email" className="text-foreground">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="pl-10 h-12 bg-background border-input"
+                  required
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-11 font-semibold gradient-vs-primary hover:opacity-90 transition-opacity"
+              disabled={resetLoading}
+            >
+              {resetLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Enviando...
+                </>
+              ) : 'Enviar link'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

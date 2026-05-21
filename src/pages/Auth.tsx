@@ -6,18 +6,20 @@ import logoImg from '@/assets/logo-viniferasense.png';
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { user, profile, loading } = useAuthContext();
+  const { user, profile, loading, isPasswordRecovery } = useAuthContext();
 
   useEffect(() => {
     if (!loading && user) {
-      if (profile) {
+      if (isPasswordRecovery) {
+        navigate('/reset-password');
+      } else if (profile) {
         const routes: Record<string, string> = { gestor: '/gestor', motorista: '/motorista', autonomo: '/autonomo' };
         navigate(routes[profile.tipo] || '/gestor');
       } else {
         navigate('/setup');
       }
     }
-  }, [user, profile, loading, navigate]);
+  }, [user, profile, loading, isPasswordRecovery, navigate]);
 
   if (loading) {
     return (

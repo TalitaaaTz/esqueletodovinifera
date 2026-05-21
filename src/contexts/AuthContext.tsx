@@ -7,11 +7,16 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
+  isPasswordRecovery: boolean;
   loading: boolean;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  requestPasswordReset: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (password: string) => Promise<{ error: Error | null }>;
+  clearPasswordRecovery: () => void;
   signOut: () => Promise<{ error: Error | null }>;
   createProfile: (nome: string, tipo: UserType) => Promise<{ error: Error | null }>;
+  updateProfileName: (nome: string) => Promise<{ error: Error | null }>;
   refreshProfile: () => void;
 }
 
