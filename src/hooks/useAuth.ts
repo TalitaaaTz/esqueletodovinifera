@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { safeSessionStorage } from '@/lib/browserStorage';
 import { UserProfile, UserType } from '@/types/database';
 
 const PASSWORD_RECOVERY_KEY = 'password_recovery_active';
@@ -13,15 +14,15 @@ const hasPasswordRecoveryToken = () => {
 };
 
 const markPasswordRecovery = () => {
-  sessionStorage.setItem(PASSWORD_RECOVERY_KEY, '1');
+  safeSessionStorage.setItem(PASSWORD_RECOVERY_KEY, '1');
 };
 
 const clearPasswordRecoveryFlag = () => {
-  sessionStorage.removeItem(PASSWORD_RECOVERY_KEY);
+  safeSessionStorage.removeItem(PASSWORD_RECOVERY_KEY);
 };
 
 const getInitialPasswordRecoveryState = () => {
-  const isRecovery = sessionStorage.getItem(PASSWORD_RECOVERY_KEY) === '1' || hasPasswordRecoveryToken();
+  const isRecovery = safeSessionStorage.getItem(PASSWORD_RECOVERY_KEY) === '1' || hasPasswordRecoveryToken();
 
   if (isRecovery) {
     markPasswordRecovery();
@@ -78,7 +79,7 @@ export const useAuth = () => {
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && (sessionStorage.getItem(PASSWORD_RECOVERY_KEY) === '1' || hasPasswordRecoveryToken())) {
+      if (session && (safeSessionStorage.getItem(PASSWORD_RECOVERY_KEY) === '1' || hasPasswordRecoveryToken())) {
         markPasswordRecovery();
         setIsPasswordRecovery(true);
       }

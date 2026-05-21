@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
+import { safeSessionStorage } from "@/lib/browserStorage";
 import IntroSplash from "@/components/IntroSplash";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -25,9 +26,17 @@ const isPasswordRecoveryEntry = () => {
 
   return (
     window.location.pathname === '/reset-password' ||
-    sessionStorage.getItem('password_recovery_active') === '1' ||
+    safeSessionStorage.getItem('password_recovery_active') === '1' ||
     hashParams.get('type') === 'recovery' ||
     searchParams.get('type') === 'recovery'
+  );
+};
+
+const shouldSkipIntroEntry = () => {
+  return (
+    window.location.pathname === '/auth' ||
+    window.location.pathname === '/reset-password' ||
+    isPasswordRecoveryEntry()
   );
 };
 
@@ -47,17 +56,17 @@ const PasswordRecoveryRedirect = () => {
 
 const App = () => {
   const [showIntro, setShowIntro] = useState(() => {
-    const seen = sessionStorage.getItem('intro_seen');
-    return !seen && !isPasswordRecoveryEntry();
+    const seen = safeSessionStorage.getItem('intro_seen');
+    return !seen && !shouldSkipIntroEntry();
   });
 
   const handleIntroComplete = useCallback(() => {
-    sessionStorage.setItem('intro_seen', '1');
+    safeSessionStorage.setItem('intro_seen', '1');
     setShowIntro(false);
   }, []);
 
   useEffect(() => {
-    if (isPasswordRecoveryEntry()) {
+    if (shouldSkipIntroEntry()) {
       setShowIntro(false);
     }
   }, []);

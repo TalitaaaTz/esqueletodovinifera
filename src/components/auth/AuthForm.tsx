@@ -172,7 +172,12 @@ export const AuthForm = ({ onSuccess }: AuthFormProps) => {
     try {
       const { error } = await requestPasswordReset(cleanEmail);
       if (error) {
-        toast.error('Erro ao solicitar recuperação: ' + error.message);
+        const isRateLimit = error.message.toLowerCase().includes('security purposes');
+        toast.error(
+          isRateLimit
+            ? 'Aguarde alguns segundos antes de pedir outro link de recuperação.'
+            : 'Erro ao solicitar recuperação: ' + error.message
+        );
         return;
       }
 
