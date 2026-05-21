@@ -13,28 +13,22 @@ const IntroSplash = ({ onComplete }: IntroSplashProps) => {
     const video = videoRef.current;
     if (!video) return;
 
-    const completeIntro = () => {
-      setFadeOut(true);
-      setTimeout(() => onComplete(), 600);
-    };
-
     const handleTimeUpdate = () => {
       if (video.duration && video.currentTime >= video.duration - 2.5) {
         setShowLogo(true);
       }
     };
 
-    const fallbackTimer = window.setTimeout(completeIntro, 10000);
+    const handleEnded = () => {
+      setFadeOut(true);
+      setTimeout(() => onComplete(), 600);
+    };
 
     video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('ended', completeIntro);
-    video.addEventListener('error', completeIntro);
-
+    video.addEventListener('ended', handleEnded);
     return () => {
-      window.clearTimeout(fallbackTimer);
       video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('ended', completeIntro);
-      video.removeEventListener('error', completeIntro);
+      video.removeEventListener('ended', handleEnded);
     };
   }, [onComplete]);
 

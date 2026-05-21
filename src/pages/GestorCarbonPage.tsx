@@ -4,15 +4,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CarbonOverviewTab } from '@/components/carbon/CarbonOverviewTab';
 import { CarbonTripsTab } from '@/components/carbon/CarbonTripsTab';
@@ -30,8 +21,7 @@ import {
   Settings,
   Menu,
   X,
-  Loader2,
-  Pencil,
+  
   ChevronLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -39,12 +29,9 @@ import { cn } from '@/lib/utils';
 
 const GestorCarbonPage = () => {
   const navigate = useNavigate();
-  const { user, profile, loading, signOut, updateProfileName } = useAuthContext();
+  const { user, profile, loading, signOut } = useAuthContext();
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
-  const [profileName, setProfileName] = useState(profile?.nome ?? '');
-  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -71,35 +58,6 @@ const GestorCarbonPage = () => {
       toast.error('Erro ao sair: ' + error.message);
     } else {
       toast.success('Até logo!');
-    }
-  };
-
-  const handleOpenProfileDialog = () => {
-    setProfileName(profile?.nome ?? '');
-    setProfileDialogOpen(true);
-  };
-
-  const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const cleanName = profileName.trim();
-    if (cleanName.length < 2) {
-      toast.error('Informe um nome com pelo menos 2 caracteres');
-      return;
-    }
-
-    setSavingProfile(true);
-    try {
-      const { error } = await updateProfileName(cleanName);
-      if (error) {
-        toast.error('Erro ao atualizar nome: ' + error.message);
-        return;
-      }
-
-      toast.success('Nome atualizado!');
-      setProfileDialogOpen(false);
-    } finally {
-      setSavingProfile(false);
     }
   };
 
@@ -140,25 +98,9 @@ const GestorCarbonPage = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleOpenProfileDialog}
-                className="hidden sm:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <span>
-                  Olá, <span className="font-medium text-foreground">{profile?.nome}</span>
-                </span>
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleOpenProfileDialog}
-                className="h-9 w-9 sm:hidden"
-                aria-label="Editar nome"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                Olá, <span className="font-medium text-foreground">{profile?.nome}</span>
+              </span>
               <Button
                 variant="ghost"
                 size="icon"
@@ -171,45 +113,6 @@ const GestorCarbonPage = () => {
           </div>
         </div>
       </header>
-
-      <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar nome</DialogTitle>
-            <DialogDescription>
-              Esse nome aparece no topo da sua dashboard.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleProfileSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="carbon-profile-name" className="text-foreground">Nome de usuário</Label>
-              <Input
-                id="carbon-profile-name"
-                type="text"
-                placeholder="Seu nome"
-                value={profileName}
-                onChange={(e) => setProfileName(e.target.value)}
-                className="h-12 bg-background border-input"
-                required
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full h-11 font-semibold gradient-vs-primary hover:opacity-90 transition-opacity"
-              disabled={savingProfile}
-            >
-              {savingProfile ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Salvando...
-                </>
-              ) : 'Salvar nome'}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <div className="flex">
         {/* Sidebar */}
